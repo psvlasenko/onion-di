@@ -1,0 +1,22 @@
+{
+  "author": "Pavel Vlasenko psvlasenko@gmail.com",
+  "name": "@onion/di",
+  "version": "0.0.1",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/psvlasenko/onion-di.git"
+  },
+  "homepage": "https://github.com/psvlasenko/onion-di",
+  "scripts": {
+    "build": "tsc --build --clean && tsc",
+    "test": "node --test --test-reporter=spec dist/*.test.js"
+  },
+  "devDependencies": {
+    "typescript": "5.8.3",
+    "@types/node": "20.13.0"
+  }
+}
