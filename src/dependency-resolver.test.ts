@@ -8,11 +8,11 @@ describe('dependency resolver', () => {
   const idServiceSymbol = Symbol('id service');
 
   it('repeated calls cause an error', () => {
-    interface UserService { kind: typeof userServiceSymbol }
-    interface IdService { kind: typeof idServiceSymbol }
+    interface A { kind: typeof userServiceSymbol }
+    interface B { kind: typeof idServiceSymbol }
 
-    const createUserService = (): UserService => ({ kind: userServiceSymbol });
-    const createIdService = (): IdService => ({ kind: idServiceSymbol });
+    const createUserService = (): A => ({ kind: userServiceSymbol });
+    const createIdService = (): B => ({ kind: idServiceSymbol });
 
     const resolve = makeDependencyResolver({
       idService: createIdService,
@@ -92,6 +92,36 @@ describe('dependency resolver', () => {
       assert.equal(userService.getIdService().kind, idServiceSymbol);
     });
 
+    it('when resolver params contains component instance', () => {
+      interface UserService {
+        kind: typeof userServiceSymbol;
+        getIdService: () => IdService;
+      }
+
+      interface IdService {
+        kind: typeof idServiceSymbol;
+      }
+
+      const createUserService = ({ idService }: { idService: IdService }): UserService => {
+        return ({
+          kind: userServiceSymbol,
+          getIdService: () => idService,
+        });
+      };
+
+      const idService: IdService = { kind: idServiceSymbol };
+
+      const resolve = makeDependencyResolver({
+        idService,
+        userService: createUserService,
+      });
+
+      const userService = resolve('userService'); // act
+
+      assert.equal(userService.kind, userServiceSymbol);
+      assert.equal(userService.getIdService().kind, idServiceSymbol);
+    });
+
     it('when resolver parameters contains factories with aliases', () => {
       interface UserService {
         kind: typeof userServiceSymbol;
@@ -100,11 +130,11 @@ describe('dependency resolver', () => {
 
       interface IdService { kind: typeof idServiceSymbol }
 
-      interface UserServiceDeps { idServiceAlias: IdService }
+      interface UserServiceDeps { paramIdService: IdService }
 
-      const createUserService = ({ idServiceAlias }: UserServiceDeps): UserService => ({
+      const createUserService = ({ paramIdService }: UserServiceDeps): UserService => ({
         kind: userServiceSymbol,
-        getIdService: () => idServiceAlias,
+        getIdService: () => paramIdService,
       });
 
       const createIdService = (): IdService => ({ kind: idServiceSymbol });
@@ -114,7 +144,7 @@ describe('dependency resolver', () => {
         userService: {
           factory: createUserService,
           aliases: {
-            idService: 'idServiceAlias',
+            paramIdService: 'idService',
           },
         },
       });

@@ -10,40 +10,46 @@ A simple, lightweight, and type-safe dependency injection library.
 
 # Usage example:
 ```typescript
+const configSymbol = Symbol('config symbol');
 const userServiceSymbol = Symbol('user service');
 const nameServiceSymbol = Symbol('name service');
 const idServiceSymbol = Symbol('id service');
 
+interface Config = { kind: typeof config }
+interface NameService { kind: typeof nameServiceSymbol }
+interface IdService { kind: typeof idServiceSymbol }
+
 interface UserService {
   kind: typeof userServiceSymbol;
+  getConfig: () => Config;
   getIdService: () => IdService;
   getNameService: () => NameService;
 }
 
-interface NameService { kind: typeof nameServiceSymbol }
-interface IdService { kind: typeof idServiceSymbol }
-
 interface UserServiceParams {
-  nameServiceAlias: NameService;
+  config: Config;
+  nameServiceParameterKey: NameService;
   idService: IdService;
 }
 
-const createUserService = ({ nameServiceAlias, idService }: UserServiceParams): UserService => ({
+const createUserService = ({ nameServiceParameterKey, idService, config }: UserServiceParams): UserService => ({
   kind: userServiceSymbol,
+  getConfig: () => config,
   getIdService: () => idService,
-  getNameService: () => nameServiceAlias,
+  getNameService: () => nameServiceParameterKey,
 });
 
 const createNameService = (): NameService => ({ kind: nameServiceSymbol });
 const createIdService = (): IdService => ({ kind: idServiceSymbol });
 
 const resolve = makeDependencyResolver({
-  nameService: createNameService,
-  idService: createIdService,
-  userService: {
+  config: { kind: configSymbol }, // value
+  nameService: createNameService, // factory
+  idService: createIdService, // factory
+  userService: { // factory with aliases
     factory: createUserService,
     aliases: {
-      nameService: 'nameServiceAlias',
+      nameServiceParameterKey: 'nameService',
     },
   },
 });
@@ -54,4 +60,5 @@ const userService = resolve('userService');
 assert.equal(userService.kind, userServiceSymbol);
 assert.equal(userService.getIdService().kind, idServiceSymbol);
 assert.equal(userService.getNameService().kind, nameServiceSymbol);
+assert.equal(userService.getConfig().kind, configSymbol);
 ```
